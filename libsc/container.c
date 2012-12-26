@@ -10,7 +10,7 @@
 
 static void handler(int sig, siginfo_t *si, void *unused)
 {
-  printf("Got SIGTERM at address: 0x%lx\n", (long) si->si_addr);
+  printf("Got signal %d at address: 0x%lx\n", sig, (long) si->si_addr);
   exit(0);
 }
 
@@ -75,7 +75,9 @@ int start_container(void * arg)
   sigemptyset(&sa.sa_mask);
   sa.sa_sigaction = handler;
   if (sigaction(SIGTERM, &sa, NULL) == -1) 
-    perror("sigaction");
+    perror("sigaction-sigterm");
+  if (sigaction(SIGUSR1, &sa, NULL) == -1) 
+    perror("sigaction-sigusr1");
 
   fprintf(stderr, "init waiting forever so children do not die!\n");
   while (1) { }
