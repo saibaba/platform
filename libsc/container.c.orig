@@ -1,0 +1,78 @@
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sched.h>
+#include "container.h"
+
+int wait_for_children()
+{
+  pid_t w;
+  int status;
+
+  do {
+    w = waitpid(-1, &status, WUNTRACED | WCONTINUED);
+    if (w == -1) {
+      perror("waitpid");
+      exit(EXIT_FAILURE);
+    }
+
+    if (WIFEXITED(status)) {
+      printf("exited, status=%d\n", WEXITSTATUS(status));
+    } else if (WIFSIGNALED(status)) {
+      printf("killed by signal %d\n", WTERMSIG(status));
+    } else if (WIFSTOPPED(status)) {
+      printf("stopped by signal %d\n", WSTOPSIG(status));
+    } else if (WIFCONTINUED(status)) {
+      printf("continued\n");
+    }
+  } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+}
+
+int create_container(void *arg)
+{
+  int a = (int) arg;
+  pid_t pid;
+
+  printf("In the CONTAINER, my pid is: %d\n", getpid());
+  printf("In the CONTAINER, waiting for parent to finish network setup...");
+  sleep(5);
+ 
+  pid = fork();
+  printf ("fork executed with rv=%d\n", pid);
+  if (pid < 0) {
+    perror("fork");
+    return pid;
+  }
+  if (pid) {
+    printf("pid of my child is %d\n", pid);
+    printf("init waiting for children \n");
+    //sleep(10);
+    wait_for_children();
+
+    fprintf(stderr, "httpd seems done... shutting down up container...\n");
+
+    char * argv[2];
+    argv[0] = "-c";
+    argv[1] = "termrc";
+ 
+    fprintf(stderr, "Child (init) stopping, executing termrc ...\n");
+    int rv = execvp("/bin/sh",  argv);
+    perror("execvp");
+    fprintf(stderr, "THIS STEP SHOULD NEVER EXECUTE!!!!\n");
+    
+  } else if (pid == 0) {
+    /* container stuff
+    */
+    char * argv[2];
+    argv[0] = "-c";
+    argv[1] = "initrc";
+ 
+    fprintf(stderr, "Child (init) started, executing initrc ...\n");
+    int rv = execvp("/bin/sh",  argv);
+    perror("execvp");
+    fprintf(stderr, "THIS STEP SHOULD NEVER EXECUTE!!!!\n");
+  }
+  return 0;
+}

@@ -1,0 +1,20 @@
+TENANT=1
+
+touch /tmp/a
+
+ifconfig v1-tenant-$TENANT 10.0.0.102 down
+echo "ip link del v1-tenant-$TENANT"
+ip link  del v1-tenant-$TENANT
+
+echo "unmounting..."
+
+umount /proc
+umount /tmp
+
+#lsof +D /etc
+#lsof +D /var
+
+umount /etc
+umount /var
+
+exit 0

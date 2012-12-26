@@ -1,0 +1,35 @@
+TENANT=1
+echo "Hi, tenant $TENANT"
+
+echo "Starting command listerner"
+/home/sai/.rvm/rubies/ruby-1.9.3-p327/bin/ruby /home/sai/platform/libsc/listener.rb &
+
+echo "mount -t proc none /home/sai/platform/tenants/$TENANT/proc"
+mount -t proc none /home/sai/platform/tenants/$TENANT/proc
+
+echo "mount -n --bind /home/sai/platform/tenants/$TENANT/proc /proc"
+mount --make-private -n --bind /home/sai/platform/tenants/$TENANT/proc /proc
+
+ls /proc
+
+echo "mount -n --bind /home/sai/platform/tenants/$TENANT     /tmp"
+mount --make-private -n --bind /home/sai/platform/tenants/$TENANT     /tmp
+
+echo "mount -n --bind /home/sai/platform/tenants/$TENANT/etc /etc"
+mount --make-private -n --bind /home/sai/platform/tenants/$TENANT/etc /etc
+
+echo "mount -n --bind /home/sai/platform/tenants/$TENANT/var /var"
+mount --make-private -n --bind /home/sai/platform/tenants/$TENANT/var /var
+
+ifconfig lo inet 127.0.0.1 netmask 255.0.0.0 up
+ifconfig v1-tenant-$TENANT 10.0.0.102 up
+
+ifconfig -a
+ip route add default  via 127.0.0.1
+ip route show
+
+ping -c 1 127.0.0.1
+
+
+
+exit 0

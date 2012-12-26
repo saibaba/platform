@@ -1,0 +1,25 @@
+echo "processes before starting httpd"
+ps -ef
+
+/usr/sbin/httpd -k start
+
+#strace -p18 &
+
+sleep 5
+echo "processes after starting httpd"
+ps -ef
+
+sleep 10
+
+
+echo "PID for httpd: `cat /var/run/httpd.pid`"
+
+#/usr/sbin/httpd -k stop
+echo "killall httpd"
+killall -v  httpd
+
+sleep 5
+echo "processes after killing httpd"
+ps -ef
+
+exit 0
